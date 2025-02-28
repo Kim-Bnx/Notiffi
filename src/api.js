@@ -20,10 +20,7 @@ export async function getStore() {
  * Delete a notification method action
  * @param {notif} notif - notification object from the store
  */
-export async function deleteOne(notif) {
-  const { channel, read } = notif;
-  const { id } = notif.text;
-
+export async function deleteOne(id, channel) {
   // Parse the payload
   const payload = new URLSearchParams();
   payload.append("id", id);
@@ -43,7 +40,6 @@ export async function deleteOne(notif) {
     // Remove the notification from the DOM
     document.querySelector(`[data-notif-id="${id}"]`).remove();
 
-    // Update the store and the unread count
     const data = await res.json();
     return data.store;
   } catch (err) {
