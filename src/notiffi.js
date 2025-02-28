@@ -1,5 +1,6 @@
 import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";
 import { getUser, textNotif, getAward, createPopUp } from "./utils.js";
+import potion from "@poumon/potion";
 
 const Notiffi = {
   store: [],
@@ -124,14 +125,20 @@ const Notiffi = {
   liveNotif: async function (notif) {
     const { from, type } = notif.text;
 
-    const { avatar, color } = await getUser(from);
-    const text = textNotif(notif, color);
+    let avatar = "";
+    let text = Toolbar.compileNotif(notif);
+
+    if (from) {
+      const userData = await getUser(from);
+      avatar = userData.avatar;
+      text = textNotif(notif, userData.color);
+    }
 
     const toast = potion("live_notif", {
       live: {
         type: this.type[type].name,
         icon: this.type[type].icon,
-        avatar: type === 14 ? getAward(n) : avatar,
+        avatar: type === 14 ? getAward(notif) : avatar,
         text,
       },
     });
@@ -167,8 +174,14 @@ const Notiffi = {
     for (const n of notifs) {
       const { id, from, type } = n.text;
 
-      const { avatar, color } = await getUser(from);
-      const text = textNotif(n, color);
+      let avatar = "";
+      let text = Toolbar.compileNotif(n);
+
+      if (from) {
+        const userData = await getUser(from);
+        avatar = userData.avatar;
+        text = textNotif(n, userData.color);
+      }
 
       renderedNotifs.push({
         id,
@@ -178,8 +191,10 @@ const Notiffi = {
         avatar: type === 14 ? getAward(n) : avatar,
         text,
         time: n.time,
-        async deleteNotif() {
-          const data = await deleteOne(n);
+        async deleteNotif(e) {
+          // TO DO : need to be fix ? somehow the first two notif get the same id only when i use it in this function
+          const dataId = e.target.closest("[data-notif-id]").dataset.notifId;
+          const data = await deleteOne(dataId, this.channel);
 
           Notiffi.store = data;
           Notiffi.displayNotifications();
@@ -194,10 +209,8 @@ const Notiffi = {
    * Display the notifications in the notification panel
    */
   displayNotifications: async function () {
-    console.log("store size", this.store.length);
-
     if (this.store.length === 0) {
-      this.syncStore.notifs = null;
+      this.syncStore.notifs = [];
       this.syncStore.isEmpty = true;
     } else {
       this.syncStore.notifs = await this.renderNotif(this.store);
