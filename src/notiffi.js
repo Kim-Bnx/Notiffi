@@ -4,6 +4,7 @@ import potion from "@poumon/potion";
 
 const Notiffi = {
   store: [],
+  disableIcon: false,
   syncStore: potion.sync("all_notifs", {
     notifs: [],
     isEmpty: true,
@@ -88,10 +89,23 @@ const Notiffi = {
     // Check if user is logged in
     if (!_userdata["session_logged_in"]) return;
 
-    const button = options.button || "#notiffi_button";
-    const panel = options.panel || "#notiffi_panel";
+    createPopUp({
+      button: options.button || "#notiffi_button",
+      panel: options.panel || "#notiffi_panel",
+    });
 
-    createPopUp({ button, panel });
+    // Handling options
+    if (options.disableIcon == true) {
+      this.disableIcon = true;
+    }
+
+    if (options.icons) {
+      for (const key in options.icons) {
+        if (this.type[key]) {
+          this.type[key].icon = options.icons[key];
+        }
+      }
+    }
 
     // Actions when the Toolbar original methods are called
     // Essentials to get the live notifications updates
@@ -112,7 +126,7 @@ const Notiffi = {
 
         // Create an alert notification with the last notification in store when it's not the first intercepted call (refresh > 1)
         if (this.refresh > 1 && !document.querySelector(`[data-notif-id="${this.store.at(-1).text.id}"]`)) {
-          this.liveNotif(this.store.at(-1));
+          this.liveNotif(options.timeout ? options.timeout : 5000, this.store.at(-1));
         }
       }
     };
@@ -122,7 +136,7 @@ const Notiffi = {
     Toolbar = this.interceptMethodCalls(Toolbar, handleMethodCall);
   },
 
-  liveNotif: async function (notif) {
+  liveNotif: async function (timeout, notif) {
     const { from, type } = notif.text;
 
     let avatar = "";
@@ -158,7 +172,7 @@ const Notiffi = {
     setTimeout(() => {
       toastNode.classList.remove("up");
       setTimeout(() => toastNode.remove(), 1000); // Attendre la fin de l'animation
-    }, 5000);
+    }, timeout);
 
     document.body.addEventListener("click", (e) => {
       if (e.target.closest("#alert_dismiss")) {
@@ -187,12 +201,12 @@ const Notiffi = {
         id,
         read: n.read ? "" : "unread",
         type: this.type[type].name,
-        icon: this.type[type].icon,
+        ...(!this.disableIcon && { icon: this.type[type].icon }),
         avatar: type === 14 ? getAward(n) : avatar,
         text,
         time: n.time,
         async deleteNotif(e) {
-          // TO DO : need to be fix ? somehow the first two notif get the same id only when i use it in this function
+          // TO DO : need to be fix ? somehow the first two notif get the same id arg only when i use it in this function
           const dataId = e.target.closest("[data-notif-id]").dataset.notifId;
           const data = await deleteOne(dataId, this.channel);
 
