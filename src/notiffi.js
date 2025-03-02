@@ -3,16 +3,17 @@ import { getUser, textNotif, getAward, createPopUp } from "./utils.js";
 import potion from "@poumon/potion";
 
 const Notiffi = {
+  isLogged: _userdata["session_logged_in"],
   store: [],
   unread: null,
   ...(_userdata["session_logged_in"] && {
-      syncStore: potion.sync("all_notifs", {
-        notifs: [],
-        isEmpty: true,
-        text: "Aucune notification",
-      }),
-    } && { syncUnread: potion.sync("unread_notifs", { count: "" }) }),
-
+    syncStore: potion.sync("all_notifs", {
+      notifs: [],
+      isEmpty: true,
+      text: "Aucune notification",
+    }),
+  }),
+  ...(_userdata["session_logged_in"] && { syncUnread: potion.sync("unread_notifs", { count: "" }) }),
   refresh: 0,
   users: {},
   disableIcon: false,
