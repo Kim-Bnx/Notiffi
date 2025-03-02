@@ -4,14 +4,18 @@ import potion from "@poumon/potion";
 
 const Notiffi = {
   store: [],
-  disableIcon: false,
-  syncStore: potion.sync("all_notifs", {
-    notifs: [],
-    isEmpty: true,
-    text: "Aucune notification",
-  }),
   unread: null,
-  syncUnread: potion.sync("unread_notifs", { count: "" }),
+  ...(_userdata["session_logged_in"] && {
+      syncStore: potion.sync("all_notifs", {
+        notifs: [],
+        isEmpty: true,
+        text: "Aucune notification",
+      }),
+    } && { syncUnread: potion.sync("unread_notifs", { count: "" }) }),
+
+  refresh: 0,
+  users: {},
+  disableIcon: false,
   type: {
     0: {
       name: "private_msg",
@@ -82,8 +86,6 @@ const Notiffi = {
       icon: '<i class="bi bi-chat-fill"></i>',
     },
   },
-  refresh: 0,
-  users: {},
 
   init: async function (options = {}) {
     // Check if user is logged in
