@@ -111,7 +111,7 @@ const Notiffi = {
     }
 
     // Actions when the Toolbar original methods are called
-    // Essentials to get the live notifications updates
+    // Essentials to get the alert notifications updates
     const handleMethodCall = async (fnName) => {
       if (fnName === "refresh") {
         // Count the intercepted calls to avoid the first one (the first one is triggered by the page load)
@@ -129,7 +129,7 @@ const Notiffi = {
 
         // Create an alert notification with the last notification in store when it's not the first intercepted call (refresh > 1)
         if (this.refresh > 1 && !document.querySelector(`[data-notif-id="${this.store.at(-1).text.id}"]`)) {
-          this.liveNotif(options.timeout ? options.timeout : 5000, this.store.at(-1));
+          this.alertNotif(options.timeout ? options.timeout : 5000, this.store.at(-1));
         }
       }
     };
@@ -139,7 +139,7 @@ const Notiffi = {
     Toolbar = this.interceptMethodCalls(Toolbar, handleMethodCall);
   },
 
-  liveNotif: async function (timeout, notif) {
+  alertNotif: async function (timeout, notif) {
     const { from, type } = notif.text;
 
     let avatar = "";
@@ -151,8 +151,8 @@ const Notiffi = {
       text = textNotif(notif, userData.color);
     }
 
-    const toast = potion("live_notif", {
-      live: {
+    const toast = potion("alert_notif", {
+      alert: {
         type: this.type[type].name,
         icon: this.type[type].icon,
         avatar: type === 14 ? getAward(notif) : avatar,
