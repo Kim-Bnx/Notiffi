@@ -1,10 +1,10 @@
 # Notiffi
 A forumactif plugin for a better notification system :
 
-- Unlike the original toolbar, you now have access to the HTML structure of the notifications. Useful for a better personnalisation!
-- Add some functionnaly like "mark all as read" or "delete everything" buttons.
-- Better UI in general : add the notification date, the avatar of the user who notify you and the possibily to customize the notification depending of their type (new mp, new post, tag, ...).
-- Improving the live alert notification in a cute little toaster.
+- Unlike the original toolbar, you now have access to the HTML structure of notifications, allowing for better customization!
+- Adds functionalities like "Mark all as read" and "Delete all" buttons.
+- Improved UI: displays the notification date, the avatar of the user who notified you, and allows customization based on the notification type (new PM, new post, mention, etc.).
+- Enhances live alert notifications with a cute little toaster.
 
 ▶️ [SEE THE DOCUMENTATION](https://blankthemerpg.forumactif.com/t203-notiffi)
 
@@ -13,8 +13,9 @@ A forumactif plugin for a better notification system :
 ## Try it 
 
 Once you've cloned the repo, run `npm i`
-- `npm run dev` to build instantly 
-- `npm run serve` to try on a local serve
+
+- `npm run dev` → builds the project instantly.
+- `npm run serve` → starts a local server to test the plugin.
 
 Don't forget to initialize the plugin in your HTML page
 
@@ -36,13 +37,13 @@ Don't forget to initialize the plugin in your HTML page
 })</script>
 ```
 
-- `button: (string)`
-CSS selector of the panel toggle
-
+- `button: (string)` CSS selector for the panel toggle
 - `panel: (string)` CSS selector of the panel
-- `timeout: (number)` alert duration before dismiss
-- `disableIcon: (boolean)` disable the display of notification icon type
+- `timeout: (number)` duration before an alert disappears (in milliseconds)
+- `disableIcon: (boolean)` disable the display of notification type icon
 - `icons: : (objet)` customize the icon content 
+
+Example :
 
 ```html
 <script>Notiffi.init({
@@ -56,21 +57,21 @@ CSS selector of the panel toggle
 
 ### Notification type :
 | Type ID | Type name |
-|-------|-------|
-|`0`| nouveau message privé|
-|`1`| notif_report|
-|`2`| invitation d'ami|
-|`3`| demande d'ajout à un groupe|
-|`4`| conversation avec un ami|
-|`5`| message sur le mur de profil|
-|`6`| report d'abus|
-|`7`| nouveau poste dans un sujet suivi|
-|`8`| mention|
-|`9`| utilisation d'un tag suivi|
-|`10`| nouvelle notification push|
-|`11`| "j'aime" d'un poste|
-|`12`| "je n'aime pas" d'un poste|
-|`13`| nouveau sujet dans un forum suivi|
-|`14`| nouvelle récompense obtenue|
-|`15`| un membre suivi a posté un nouveau message|
-|`16`| un membre suivi a créé un nouveau sujet|
+|---------|----------|
+| `0` | New private message |
+| `1` | Report notification |
+| `2` | Friend invitation |
+| `3` | Group join request |
+| `4` | Friend conversation |
+| `5` | Wall post |
+| `6` | Abuse report |
+| `7` | New post in a followed topic |
+| `8` | Mention |
+| `9` | Followed tag used |
+| `10` | New push notification |
+| `11` | Post liked |
+| `12` | Post disliked |
+| `13` | New topic in a followed forum |
+| `14` | New achievement unlocked |
+| `15` | Followed member posted a message |
+| `16` | Followed member created a new topic |
