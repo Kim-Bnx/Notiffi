@@ -92,12 +92,10 @@ const Notiffi = {
     // Check if user is logged in
     if (!_userdata["session_logged_in"]) return;
 
-    /*
     createPopUp({
       button: options.button || "#notiffi_button",
       panel: options.panel || "#notiffi_panel",
     });
-    */
 
     // Handling options
     if (options.disableIcon == true) {
