@@ -1,80 +1,70 @@
-/**
- * Fetch the user avatar from its profile page
- * @param {object} user - user object from the store
- * @returns avatar image URL
- */
-export async function getUser(user) {
-  const { id, name } = user;
+export async function buildNotif(n, { getUser }) {
+  const { from } = n.text;
 
-  // Return an empty object for anonymous users
-  if (name === "Anonymous") return { avatar: "", color: "" };
+  let name = "";
+  let avatar = "";
+  let text = Toolbar.compileNotif(n);
+  let color = "";
 
-  // Check if the user is already in the cache avoiding a new fetch
-  if (Notiffi.users[id]) return Notiffi.users[id];
-
-  try {
-    const response = await fetch(`/u${id}`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.statusText}`);
-    }
-
-    const html = await response.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    // Récupération de l'avatar
-    const img = doc.querySelector(`img[alt="${name}"]`);
-    const avatar = img ? `<img loading="lazy" src=${img.src} />` : "";
-
-    // Récupération de la couleur du tag (si disponible)
-    const pseudo = doc.querySelector(`span[style^="color:#"]`);
-    const color = pseudo ? pseudo.style.color : "";
-
-    // Stocker dans le cache
-    Notiffi.users[id] = { avatar, color };
-
-    return Notiffi.users[id];
-  } catch (error) {
-    console.error(`Error fetching avatar for user ${name}`, error);
-    return null;
+  function textNotif(notif, color) {
+    const { from } = notif.text;
+    return Toolbar.compileNotif(notif).replace(new RegExp(`(<a href="/u${from.id}")`, "g"), `$1 style="color: ${color}"`);
   }
-}
 
-export function textNotif(notif, color) {
-  const { from } = notif.text;
-  return Toolbar.compileNotif(notif).replace(new RegExp(`(<a href="/u${from.id}")`, "g"), `$1 style="color: ${color}"`);
+  if (from) {
+    const userData = await getUser(from);
+    name = from.name === "Anonymous" ? "" : from.name;
+    avatar = userData.avatar;
+    color = userData.color;
+    text = textNotif(n, color);
+  }
+
+  return { name, avatar, text, color };
 }
 
 export function getAward(notif) {
   return `<img src="${notif.text.award.award_image}" />`;
 }
 
-export function createPopUp({ button, panel }) {
-  const buttonElement = document.querySelector(button);
-  const panelElement = document.querySelector(panel);
+/**
+ * Intercept method calls on the Toolbar original script and execute a function
+ * @param {*} obj - Toolbar
+ * @param {*} fn - function called when a method is intercepted
+ * @returns {Proxy}
+ */
+export function interceptMethodCalls(obj, fn) {
+  return new Proxy(obj, {
+    get(target, prop) {
+      if (typeof target[prop] === "function") {
+        return new Proxy(target[prop], {
+          apply: (target, thisArg, argumentsList) => {
+            fn(prop, argumentsList);
+            return Reflect.apply(target, thisArg, argumentsList);
+          },
+        });
+      } else {
+        return Reflect.get(target, prop);
+      }
+    },
+  });
+}
 
-  if (!buttonElement || !panelElement) {
-    console.error("Notiffi popup : button or panel selector not found.");
-    return;
-  }
+/**
+ * Ajoute une classe d'entrée, puis retire le node après délai.
+ * @param {HTMLElement} node
+ * @param {Object} options
+ * @param {string} [options.enterClass="up"]
+ * @param {number} options.timeout - durée avant sortie
+ * @param {number} [options.exitDuration=1000] - durée animation de sortie
+ */
+export function animateToast(node, { enterClass = "up", timeout, exitDuration = 1000 } = {}) {
+  if (!node) return;
 
-  function togglepanel() {
-    buttonElement.classList.toggle("active");
-    panelElement.classList.toggle("open");
-  }
+  node.getBoundingClientRect(); // garantit styles init
+  requestAnimationFrame(() => node.classList.add(enterClass));
 
-  function closepanel() {
-    buttonElement.classList.remove("active");
-    panelElement.classList.remove("open");
-  }
-
-  function handleClickOutside(event) {
-    if (!buttonElement.contains(event.target) && !panelElement.contains(event.target) && panelElement.classList.contains("open")) {
-      closepanel();
-    }
-  }
-
-  // Ajout des listeners
-  buttonElement.addEventListener("click", togglepanel);
-  document.addEventListener("click", handleClickOutside);
+  setTimeout(() => {
+    node.classList.remove(enterClass);
+    setTimeout(() => node.remove(), exitDuration);
+  }, timeout);
 }

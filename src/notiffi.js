@@ -1,111 +1,119 @@
-import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";
-import { getUser, textNotif, getAward, createPopUp } from "./utils.js";
+import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";import { interceptMethodCalls, animateToast, buildNotif, getAward } from "./utils.js";
 import potion from "@poumon/potion";
+const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, createPopUp, parseHTML }) {
+  const defaults = {
+    button: "#notiffi_button",
+    panel: "#notiffi_panel",
+    disableIcon: false,
+    type: {
+      0: {
+        name: "private_msg",
+        icon: '<i class="bi bi-envelope-fill"></i>',
+      },
+      1: {
+        name: "notif_report",
+        icon: '<i class="bi bi-flag-fill"></i>',
+      },
+      2: {
+        name: "friend_request",
+        icon: '<i class="bi bi-person-fill-add"></i>',
+      },
+      3: {
+        name: "group_req",
+        icon: '<i class="bi bi-people-fill"></i>',
+      },
+      4: {
+        name: "friend_conv",
+        icon: '<i class="bi bi-people-fill"></i>',
+      },
+      5: {
+        name: "wall_msg",
+        icon: '<i class="bi bi-chat-fill"></i>',
+      },
+      6: {
+        name: "abuse",
+        icon: '<i class="bi bi-flag-fill"></i>',
+      },
+      7: {
+        name: "topic_watch",
+        icon: '<i class="bi bi-chat-fill"></i>',
+      },
+      8: {
+        name: "mention",
+        icon: '<i class="bi bi-at"></i>',
+      },
+      9: {
+        name: "hashtag",
+        icon: '<i class="bi bi-hash"></i>',
+      },
+      10: {
+        name: "advert",
+        icon: '<i class="bi bi-flag-fill"></i>',
+      },
+      11: {
+        name: "like",
+        icon: '<i class="bi bi-heart-fill"></i>',
+      },
+      12: {
+        name: "dislike",
+        icon: '<i class="bi bi-heart-half"></i>',
+      },
+      13: {
+        name: "forum_watch",
+        icon: '<i class="bi bi-chat-left-fill"></i>',
+      },
+      14: {
+        name: "new_award",
+        icon: '<i class="bi bi-star-fill"></i>',
+      },
+      15: {
+        name: "follower_new_topic",
+        icon: '<i class="bi bi-chat-left-fill"></i>',
+      },
+      16: {
+        name: "follower_new_post",
+        icon: '<i class="bi bi-chat-fill"></i>',
+      },
+    },
+  };
 
-const Notiffi = {
-  isLogged: _userdata["session_logged_in"],
-  store: [],
-  unread: null,
-  ...(_userdata["session_logged_in"] && {
-    syncStore: potion.sync("all_notifs", {
+  let config = { ...defaults };
+
+  let store = [];
+  let unread = null;
+
+  const syncStore =
+    isConnected() &&
+    potion.sync("all_notifs", {
       notifs: [],
       isEmpty: true,
       text: "Aucune notification",
-    }),
-  }),
-  ...(_userdata["session_logged_in"] && { syncUnread: potion.sync("unread_notifs", { count: "" }) }),
-  refresh: 0,
-  users: {},
-  disableIcon: false,
-  type: {
-    0: {
-      name: "private_msg",
-      icon: '<i class="bi bi-envelope-fill"></i>',
-    },
-    1: {
-      name: "notif_report",
-      icon: '<i class="bi bi-flag-fill"></i>',
-    },
-    2: {
-      name: "friend_request",
-      icon: '<i class="bi bi-person-fill-add"></i>',
-    },
-    3: {
-      name: "group_req",
-      icon: '<i class="bi bi-people-fill"></i>',
-    },
-    4: {
-      name: "friend_conv",
-      icon: '<i class="bi bi-people-fill"></i>',
-    },
-    5: {
-      name: "wall_msg",
-      icon: '<i class="bi bi-chat-fill"></i>',
-    },
-    6: {
-      name: "abuse",
-      icon: '<i class="bi bi-flag-fill"></i>',
-    },
-    7: {
-      name: "topic_watch",
-      icon: '<i class="bi bi-chat-fill"></i>',
-    },
-    8: {
-      name: "mention",
-      icon: '<i class="bi bi-at"></i>',
-    },
-    9: {
-      name: "hashtag",
-      icon: '<i class="bi bi-hash"></i>',
-    },
-    10: {
-      name: "advert",
-      icon: '<i class="bi bi-flag-fill"></i>',
-    },
-    11: {
-      name: "like",
-      icon: '<i class="bi bi-heart-fill"></i>',
-    },
-    12: {
-      name: "dislike",
-      icon: '<i class="bi bi-heart-half"></i>',
-    },
-    13: {
-      name: "forum_watch",
-      icon: '<i class="bi bi-chat-left-fill"></i>',
-    },
-    14: {
-      name: "new_award",
-      icon: '<i class="bi bi-star-fill"></i>',
-    },
-    15: {
-      name: "follower_new_topic",
-      icon: '<i class="bi bi-chat-left-fill"></i>',
-    },
-    16: {
-      name: "follower_new_post",
-      icon: '<i class="bi bi-chat-fill"></i>',
-    },
-  },
-
-  init: async function (options = {}) {
-    // Check if user is logged in
-    if (!_userdata["session_logged_in"]) return;
-
-    createPopUp({
-      button: options.button || "#notiffi_button",
-      panel: options.panel || "#notiffi_panel",
     });
 
-    // Handling options
-    if (options.disableIcon == true) {
-      this.disableIcon = true;
+  const syncUnread = isConnected() && potion.sync("unread_notifs", { count: "" });
+
+  let refresh = 0;
+
+  async function init(options = {}) {
+    // Check if user is logged in
+    if (!isConnected()) return;
+
+    config = { ...defaults, ...options };
+
+    createPopUp({
+      button: config.button,
+      panel: config.panel,
+    });
+
+    // Handling easier attribut config
+    if (config.disableIcon == true) {
+      config.disableIcon = true;
     }
 
-    if (options.icons) {
-      for (const key in options.icons) {
-        if (this.type[key]) {
-          this.type[key].icon = options.icons[key];
+    if (config.icons) {
+      for (const key in config.icons) {
+        if (config.type[key]) {
+          config.type[key].icon = config.icons[key];
         }
       }
     }
@@ -115,67 +123,49 @@ const Notiffi = {
     const handleMethodCall = async (fnName) => {
       if (fnName === "refresh") {
         // Count the intercepted calls to avoid the first one (the first one is triggered by the page load)
-        this.refresh++;
+        refresh++;
 
         // Fetch the notifications with a custom method
         const storeAPI = await getStore();
 
         // Update the store and the unread count
-        this.store = storeAPI.store;
-        this.displayNotifications(this.store);
+        store = storeAPI.store;
+        displayNotifications(store);
 
-        this.unread = storeAPI.unread;
-        this.handleUnread(this.unread);
+        unread = storeAPI.unread;
+        handleUnread(unread);
 
         // Create an alert notification with the last notification in store when it's not the first intercepted call (refresh > 1)
-        if (this.refresh > 1 && !document.querySelector(`[data-notif-id="${this.store.at(-1).text.id}"]`)) {
-          this.alertNotif(options.timeout ? options.timeout : 5000, this.store.at(-1));
+        if (refresh > 1 && !document.querySelector(`[data-notif-id="${store.at(-1).text.id}"]`)) {
+          alertNotif(config.timeout ? config.timeout : 5000, store.at(-1));
         }
       }
     };
-    this.manageNotifications();
+    manageNotifications();
 
     // Toolbar proxy
-    Toolbar = this.interceptMethodCalls(Toolbar, handleMethodCall);
-  },
+    Toolbar = interceptMethodCalls(Toolbar, handleMethodCall);
+  }
 
-  alertNotif: async function (timeout, notif) {
-    const { from, type } = notif.text;
+  async function alertNotif(timeout, notif) {
+    const { type } = notif.text;
 
-    let avatar = "";
-    let text = Toolbar.compileNotif(notif);
-
-    if (from) {
-      const userData = await getUser(from);
-      avatar = userData.avatar;
-      text = textNotif(notif, userData.color);
-    }
+    // Blanket dependance
+    const { avatar, name, text } = await buildNotif(notif, { getUser });
 
     const toast = potion("alert_notif", {
       alert: {
-        type: this.type[type].name,
-        icon: this.type[type].icon,
-        avatar: type === 14 ? getAward(notif) : avatar,
+        type: config.type[type].name,
+        icon: config.type[type].icon,
+        name,
+        avatar: config.type === 14 ? getAward(notif) : avatar,
         text,
       },
     });
-    const parser = new DOMParser();
-    const toastNode = parser.parseFromString(toast, "text/html").body.firstChild;
+    const toastNode = parseHTML(toast).body.firstChild;
 
     document.body.appendChild(toastNode);
-
-    // Forcer un reflow pour garantir l'application des styles initiaux
-    toastNode.getBoundingClientRect();
-
-    // Ajouter la classe après le reflow
-    requestAnimationFrame(() => {
-      toastNode.classList.add("up");
-    });
-
-    setTimeout(() => {
-      toastNode.classList.remove("up");
-      setTimeout(() => toastNode.remove(), 1000); // Attendre la fin de l'animation
-    }, timeout);
+    animateToast(toastNode, { timeout });
 
     document.body.addEventListener("click", (e) => {
       if (e.target.closest("#alert_dismiss")) {
@@ -183,29 +173,24 @@ const Notiffi = {
         setTimeout(() => toastNode.remove(), 1000);
       }
     });
-  },
+  }
 
-  renderNotif: async function (notifs) {
+  async function renderNotif(notifs) {
     let renderedNotifs = [];
 
     for (const n of notifs) {
-      const { id, from, type } = n.text;
+      const { id, type } = n.text;
 
-      let avatar = "";
-      let text = Toolbar.compileNotif(n);
-
-      if (from) {
-        const userData = await getUser(from);
-        avatar = userData.avatar;
-        text = textNotif(n, userData.color);
-      }
+      // Blanket dependance
+      const { avatar, name, text } = await buildNotif(n, { getUser });
 
       renderedNotifs.push({
         id,
         read: n.read ? "" : "unread",
-        type: this.type[type].name,
-        ...(!this.disableIcon && { icon: this.type[type].icon }),
-        avatar: type === 14 ? getAward(n) : avatar,
+        type: config.type[type].name,
+        ...(!config.disableIcon && { icon: config.type[type].icon }),
+        name,
+        avatar: config.type[type] === 14 ? getAward(n) : avatar,
         text,
         time: n.time,
         async deleteNotif(e) {
@@ -213,29 +198,29 @@ const Notiffi = {
           const dataId = e.target.closest("[data-notif-id]").dataset.notifId;
           const data = await deleteOne(dataId, this.channel);
 
-          Notiffi.store = data;
-          Notiffi.displayNotifications();
-          Notiffi.handleUnread();
+          store = data;
+          displayNotifications();
+          handleUnread();
         },
       });
     }
     return renderedNotifs.reverse();
-  },
+  }
 
   /**
    * Display the notifications in the notification panel
    */
-  displayNotifications: async function () {
-    if (this.store.length === 0) {
-      this.syncStore.notifs = [];
-      this.syncStore.isEmpty = true;
+  async function displayNotifications() {
+    if (store.length === 0) {
+      syncStore.notifs = [];
+      syncStore.isEmpty = true;
     } else {
-      this.syncStore.notifs = await this.renderNotif(this.store);
-      this.syncStore.isEmpty = false;
+      syncStore.notifs = await renderNotif(store);
+      syncStore.isEmpty = false;
     }
-  },
+  }
 
-  manageNotifications: function () {
+  async function manageNotifications() {
     const buttons = {
       deleteAll: document.querySelector("#notiffi_delete_all"),
       markAllRead: document.querySelector("#notiffi_mark_as_read"),
@@ -244,71 +229,50 @@ const Notiffi = {
     for (const key in buttons) {
       const button = buttons[key];
       if (!button) {
-        console.error(`NOTIFFI: Le bouton ${key} est introuvable.`);
+        warn(`Le bouton ${key} est introuvable.`);
         return;
       }
 
       const handlers = {
         deleteAll: async () => {
-          const ids = this.store.map((notif) => notif.text.id);
+          const ids = store.map((notif) => notif.text.id);
           const deleted = await deleteAll(ids);
           if (deleted) {
-            while (this.store.length > 0) {
-              this.store.pop();
+            while (store.length > 0) {
+              store.pop();
             }
-            this.displayNotifications();
-            this.handleUnread();
+            displayNotifications();
+            handleUnread();
           }
         },
         markAllRead: async () => {
-          const unreadNotifs = this.store.filter((notif) => !notif.read).map((notif) => notif.text.id);
+          const unreadNotifs = store.filter((notif) => !notif.read).map((notif) => notif.text.id);
           const read = await markAsRead(unreadNotifs);
           if (read) {
-            this.handleUnread();
+            handleUnread();
           }
         },
       };
 
       button.addEventListener("click", handlers[key]);
     }
-  },
+  }
 
   /**
    * Update the unread count in the notification button
    */
-  handleUnread: function () {
-    const unreadCount = this.store.filter((notif) => !notif.read).length;
-    this.unread = unreadCount;
+  function handleUnread() {
+    const unreadCount = store.filter((notif) => !notif.read).length;
+    unread = unreadCount;
 
     if (!unreadCount) {
-      this.syncUnread.count = "";
+      syncUnread.count = "";
     } else {
-      this.syncUnread.count = this.unread;
+      syncUnread.count = unread;
     }
-  },
+  }
 
-  /**
-   * Intercept method calls on the Toolbar original script and execute a function
-   * @param {*} obj - Toolbar
-   * @param {*} fn - function called when a method is intercepted
-   * @returns {Proxy}
-   */
-  interceptMethodCalls: function (obj, fn) {
-    return new Proxy(obj, {
-      get(target, prop) {
-        if (typeof target[prop] === "function") {
-          return new Proxy(target[prop], {
-            apply: (target, thisArg, argumentsList) => {
-              fn(prop, argumentsList);
-              return Reflect.apply(target, thisArg, argumentsList);
-            },
-          });
-        } else {
-          return Reflect.get(target, prop);
-        }
-      },
-    });
-  },
-};
+  return { init };
+});
 
 export default Notiffi;

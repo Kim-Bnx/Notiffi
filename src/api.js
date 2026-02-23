@@ -21,6 +21,7 @@ export async function getStore() {
  * @param {notif} notif - notification object from the store
  */
 export async function deleteOne(id, channel) {
+  console.log(`NOTIFFI: Suppression de la notification ${id} du channel ${channel}...`);
   // Parse the payload
   const payload = new URLSearchParams();
   payload.append("id", id);
@@ -52,6 +53,7 @@ export async function deleteOne(id, channel) {
  * (taken from the notification management page)
  */
 export async function deleteAll(ids) {
+  console.log("NOTIFFI: Suppression de toutes les notifications...");
   const payload = new URLSearchParams();
 
   // Add all the notifications to the payload
