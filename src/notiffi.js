@@ -1,4 +1,5 @@
-import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";import { interceptMethodCalls, animateToast, buildNotif, getAward } from "./utils.js";
+import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";
+import { interceptMethodCalls, animateToast, buildNotif, getAward } from "./utils.js";
 import potion from "@poumon/potion";
 const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, createPopUp, parseHTML }) {
   const defaults = {
@@ -131,6 +132,7 @@ const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, creat
         // Update the store and the unread count
         store = storeAPI.store;
         displayNotifications(store);
+        console.log("NOTIFFI - store at init", store);
 
         unread = storeAPI.unread;
         handleUnread(unread);
@@ -248,7 +250,10 @@ const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, creat
         markAllRead: async () => {
           const unreadNotifs = store.filter((notif) => !notif.read).map((notif) => notif.text.id);
           const read = await markAsRead(unreadNotifs);
+
           if (read) {
+            store = store.map((item) => (item.read ? item : { ...item, read: 1 }));
+            displayNotifications();
             handleUnread();
           }
         },

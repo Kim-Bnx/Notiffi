@@ -1,9 +1,4 @@
-/**
- * Custom method to fetch the notifications store (the original one sucks)
- * @returns {Promise} - Fetch the notifications store
- */
-export async function getStore() {
-  try {
+/** * Custom method to fetch the notifications store (the original one sucks) * @returns {Promise} - Fetch the notifications store */ export async function getStore() {  try {
     const response = await fetch("/notif");
     if (!response.ok) {
       throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
@@ -21,7 +16,6 @@ export async function getStore() {
  * @param {notif} notif - notification object from the store
  */
 export async function deleteOne(id, channel) {
-  console.log(`NOTIFFI: Suppression de la notification ${id} du channel ${channel}...`);
   // Parse the payload
   const payload = new URLSearchParams();
   payload.append("id", id);
@@ -53,7 +47,6 @@ export async function deleteOne(id, channel) {
  * (taken from the notification management page)
  */
 export async function deleteAll(ids) {
-  console.log("NOTIFFI: Suppression de toutes les notifications...");
   const payload = new URLSearchParams();
 
   // Add all the notifications to the payload
@@ -94,8 +87,9 @@ export async function markAsRead(ids) {
     });
 
     if (!res.ok) throw new Error(`HTTP error! status ${res.status}`);
-    //return true;
-  } catch {
-    console.error("Erreur lors de la suppression :", err);
+
+    return true;
+  } catch (err) {
+    console.error("Erreur lors du marquage comme lu :", err);
   }
 }
