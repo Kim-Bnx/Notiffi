@@ -1,13 +1,12 @@
-/**
- * Fetch the user avatar from its profile page
- * @param {object} user - user object from the store
- * @returns avatar image URL
- */
-export async function getUser(user) {
-  const { id, name } = user;
+/** * Fetch the user avatar from its profile page * @param {object} user - user object from the store * @returns avatar image URL */ export async function getUser(  user,
+) {
+  const { id } = user;
 
-  // Return an empty object for anonymous users
-  if (name === "Anonymous") return { avatar: "", color: "" };
+  const { name } = user;
+  const parser = new DOMParser();
+  const parsedName = parser.parseFromString(name, "text/html");
+
+  const textName = parsedName.querySelector("span").textContent;
 
   // Check if the user is already in the cache avoiding a new fetch
   if (Notiffi.users[id]) return Notiffi.users[id];
@@ -19,30 +18,20 @@ export async function getUser(user) {
     }
 
     const html = await response.text();
-    const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
 
     // Récupération de l'avatar
-    const img = doc.querySelector(`img[alt="${name}"]`);
+    const img = doc.querySelector(`img[alt="${textName}"]`);
     const avatar = img ? `<img loading="lazy" src=${img.src} />` : "";
 
-    // Récupération de la couleur du tag (si disponible)
-    const pseudo = doc.querySelector(`span[style^="color:#"]`);
-    const color = pseudo ? pseudo.style.color : "";
-
     // Stocker dans le cache
-    Notiffi.users[id] = { avatar, color };
+    Notiffi.users[id] = { avatar };
 
     return Notiffi.users[id];
   } catch (error) {
-    console.error(`Error fetching avatar for user ${name}`, error);
+    console.error(`Error fetching avatar for user ${textName}`, error);
     return null;
   }
-}
-
-export function textNotif(notif, color) {
-  const { from } = notif.text;
-  return Toolbar.compileNotif(notif).replace(new RegExp(`(<a href="/u${from.id}")`, "g"), `$1 style="color: ${color}"`);
 }
 
 export function getAward(notif) {
