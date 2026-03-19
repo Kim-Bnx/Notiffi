@@ -1,4 +1,5 @@
-/** * Fetch the user avatar from its profile page * @param {object} user - user object from the store * @returns avatar image URL */ export async function getUser(  user,
+/** * Fetch the user avatar from its profile page * @param {object} user - user object from the store * @returns avatar image URL */ export async function getUser(
+  user,
 ) {
   const { id } = user;
 
