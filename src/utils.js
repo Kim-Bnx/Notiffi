@@ -8,8 +8,6 @@
 
   const textName = parsedName.querySelector("span").textContent;
 
-  console.log(textName);
-
   // Check if the user is already in the cache avoiding a new fetch
   if (Notiffi.users[id]) return Notiffi.users[id];
 
