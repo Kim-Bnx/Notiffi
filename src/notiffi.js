@@ -1,7 +1,6 @@
 import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";
-import { getUser, textNotif, getAward, createPopUp } from "./utils.js";
+import { getUser, getAward, createPopUp } from "./utils.js";
 import potion from "@poumon/potion";
-
 const Notiffi = {
   isLogged: _userdata["session_logged_in"],
   store: [],
@@ -143,12 +142,10 @@ const Notiffi = {
     const { from, type } = notif.text;
 
     let avatar = "";
-    let text = Toolbar.compileNotif(notif);
 
-    if (from) {
+    if (from && from.name !== "Anonymous") {
       const userData = await getUser(from);
       avatar = userData.avatar;
-      text = textNotif(notif, userData.color);
     }
 
     const toast = potion("alert_notif", {
@@ -156,7 +153,7 @@ const Notiffi = {
         type: this.type[type].name,
         icon: this.type[type].icon,
         avatar: type === 14 ? getAward(notif) : avatar,
-        text,
+        text: Toolbar.compileNotif(notif),
       },
     });
     const parser = new DOMParser();
@@ -192,12 +189,10 @@ const Notiffi = {
       const { id, from, type } = n.text;
 
       let avatar = "";
-      let text = Toolbar.compileNotif(n);
 
-      if (from) {
+      if (from && from.name !== "Anonymous") {
         const userData = await getUser(from);
         avatar = userData.avatar;
-        text = textNotif(n, userData.color);
       }
 
       renderedNotifs.push({
@@ -206,7 +201,7 @@ const Notiffi = {
         type: this.type[type].name,
         ...(!this.disableIcon && { icon: this.type[type].icon }),
         avatar: type === 14 ? getAward(n) : avatar,
-        text,
+        text: Toolbar.compileNotif(n),
         time: n.time,
         async deleteNotif(e) {
           // TO DO : need to be fix ? somehow the first two notif get the same id arg only when i use it in this function
