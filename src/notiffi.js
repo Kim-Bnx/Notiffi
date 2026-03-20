@@ -1,4 +1,5 @@
-import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";import { interceptMethodCalls, animateToast, buildNotif, getAward } from "./utils.js";
+import { getStore, deleteOne, deleteAll, markAsRead } from "./api.js";
+import { interceptMethodCalls, animateToast, buildNotif, getAward } from "./utils.js";
 import potion from "@poumon/potion";
 const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, createPopUp, parseHTML }) {
   const defaults = {
@@ -148,16 +149,18 @@ const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, creat
   }
 
   async function alertNotif(timeout, notif) {
-    const { type } = notif.text;
+    const { type, from } = notif.text;
+    const rawName = from.name;
 
     // Blanket dependance
-    const { avatar, name, text } = await buildNotif(notif, { getUser });
+    const { avatar, name, text } = await buildNotif(notif, { getUser, parseHTML });
 
     const toast = potion("alert_notif", {
       alert: {
         type: config.type[type].name,
         icon: config.type[type].icon,
         name,
+        isUser: rawName === "Anonymous" ? false : true,
         avatar: config.type === 14 ? getAward(notif) : avatar,
         text,
       },
@@ -179,10 +182,11 @@ const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, creat
     let renderedNotifs = [];
 
     for (const n of notifs) {
-      const { id, type } = n.text;
+      const { id, type, from } = n.text;
+      const rawName = from.name;
 
       // Blanket dependance
-      const { avatar, name, text } = await buildNotif(n, { getUser });
+      const { avatar, name, text } = await buildNotif(n, { getUser, parseHTML });
 
       renderedNotifs.push({
         id,
@@ -190,6 +194,7 @@ const Notiffi = Blanket("Notiffi", function ({ getUser, warn, isConnected, creat
         type: config.type[type].name,
         ...(!config.disableIcon && { icon: config.type[type].icon }),
         name,
+        isUser: rawName === "Anonymous" ? false : true,
         avatar: config.type[type] === 14 ? getAward(n) : avatar,
         text,
         time: n.time,

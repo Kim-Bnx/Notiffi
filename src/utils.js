@@ -1,29 +1,31 @@
-export async function buildNotif(n, { getUser }) {
+export async function buildNotif(n, { getUser, parseHTML }) {
+  console.log(n);
+
   const { from } = n.text;
+  console.log("is from", from);
 
-  let name = "";
-  let avatar = "";
-  let text = Toolbar.compileNotif(n);
-  let color = "";
+  let id = from.id,
+    name = "",
+    avatar = "",
+    text = Toolbar.compileNotif(n);
 
-  function textNotif(notif, color) {
-    const { from } = notif.text;
-    return Toolbar.compileNotif(notif).replace(new RegExp(`(<a href="/u${from.id}")`, "g"), `$1 style="color: ${color}"`);
-  }
+  if (from && from.name !== "Anonymous") {
+    const parseName = parseHTML(from.name);
+    const textName = parseName.querySelector("*").textContent;
 
-  if (from) {
-    const userData = await getUser(from);
-    name = from.name === "Anonymous" ? "" : from.name;
+    console.log("parse name: ", parseName);
+    console.log("text content name: ", textName);
+
+    const userData = await getUser({ parseName, id });
+    name = textName;
     avatar = userData.avatar;
-    color = userData.color;
-    text = textNotif(n, color);
   }
 
-  return { name, avatar, text, color };
+  return { name, avatar, text };
 }
 
 export function getAward(notif) {
-  return `<img src="${notif.text.award.award_image}" />`;
+  return notif.text.award.award_image;
 }
 
 /**
