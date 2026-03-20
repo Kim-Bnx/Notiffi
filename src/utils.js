@@ -1,12 +1,12 @@
-/** * Fetch the user avatar from its profile page * @param {object} user - user object from the store * @returns avatar image URL */ export async function getUser(  user,
-) {
+/** * Fetch the user avatar from its profile page * @param {object} user - user object from the store * @returns avatar image URL */
+export async function getUser(user) {
   const { id } = user;
 
   const { name } = user;
   const parser = new DOMParser();
   const parsedName = parser.parseFromString(name, "text/html");
 
-  const textName = parsedName.querySelector("span").textContent;
+  const textName = parsedName.querySelector("*").textContent;
 
   // Check if the user is already in the cache avoiding a new fetch
   if (Notiffi.users[id]) return Notiffi.users[id];
